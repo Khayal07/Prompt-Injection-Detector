@@ -1,8 +1,13 @@
 # --- Web / API ---
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
+gunicorn==23.0.0
 pydantic==2.10.4
 pydantic-settings==2.7.1
+
+# --- Production hardening ---
+slowapi==0.1.9
+prometheus-fastapi-instrumentator==7.0.0
 
 # --- Config ---
 PyYAML==6.0.2

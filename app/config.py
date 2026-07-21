@@ -72,12 +72,51 @@ class Settings(BaseSettings):
     # How much of the raw input to persist (truncated for privacy). 0 = store nothing.
     input_preview_chars: int = 500
 
+    # --- API security ---
+    # Comma-separated list of accepted API keys. When empty, auth is DISABLED (dev mode);
+    # when set, /check and /admin/* require a matching `X-API-Key` header.
+    api_keys: str = ""
+    # Per-client rate limit (slowapi syntax, e.g. "60/minute"). Empty disables limiting.
+    rate_limit: str = "60/minute"
+    # Storage backend for rate-limit counters. "memory://" is per-process; use a shared
+    # backend (e.g. "redis://host:6379") to enforce a global limit across workers.
+    rate_limit_storage_uri: str = "memory://"
+    # Reject inputs longer than this many characters (abuse / cost guard). 0 = no limit.
+    max_input_chars: int = 20000
+    # Comma-separated allowed CORS origins (e.g. "https://app.example.com"). "*" allows all.
+    cors_origins: str = ""
+
+    # --- Operations ---
+    log_level: str = "INFO"
+    # JSON structured logs (recommended in production) vs plain text.
+    json_logs: bool = True
+    # Expose Prometheus metrics at /metrics.
+    metrics_enabled: bool = True
+    # Auto-reload rules when config/rules.yaml changes on disk (works across workers
+    # without a coordinated signal). Adds a cheap stat() per request when enabled.
+    rules_autoreload: bool = False
+
     @property
     def classifier_available(self) -> bool:
         """True when the classifier layer is enabled and at least one provider key exists."""
         return self.classifier_enabled and bool(
             self.openai_api_key or self.openrouter_api_key
         )
+
+    @property
+    def api_key_set(self) -> set[str]:
+        """The configured API keys as a set (empty when auth is disabled)."""
+        return {k.strip() for k in self.api_keys.split(",") if k.strip()}
+
+    @property
+    def auth_enabled(self) -> bool:
+        """True when at least one API key is configured."""
+        return bool(self.api_key_set)
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Allowed CORS origins as a list."""
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
 
 @lru_cache

@@ -21,15 +21,19 @@ def client(tmp_path_factory) -> Iterator[TestClient]:
     os.environ["CLASSIFIER_ENABLED"] = "false"
     os.environ["OPENAI_API_KEY"] = ""
     os.environ["OPENROUTER_API_KEY"] = ""
+    os.environ["RATE_LIMIT"] = ""          # disable rate limiting for the default client
+    os.environ["API_KEYS"] = ""            # auth disabled by default
+    os.environ["JSON_LOGS"] = "false"
+    os.environ["METRICS_ENABLED"] = "false"
 
     # Settings are cached; clear so the app picks up the test environment above.
     from app.config import get_settings
 
     get_settings.cache_clear()
 
-    from app.main import app
+    from app.main import create_app
 
-    with TestClient(app) as test_client:
+    with TestClient(create_app()) as test_client:
         yield test_client
 
     get_settings.cache_clear()

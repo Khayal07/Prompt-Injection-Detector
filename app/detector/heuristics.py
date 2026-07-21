@@ -7,9 +7,13 @@ sub-millisecond so it can gate the (slower, costlier) LLM classifier.
 
 from __future__ import annotations
 
+import logging
+import os
 from dataclasses import dataclass, field
 
 from app.detector.rules_loader import Rule, load_rules
+
+logger = logging.getLogger("pid.heuristics")
 
 
 @dataclass
@@ -54,6 +58,7 @@ class HeuristicEngine:
     def __init__(self, rules_path: str):
         self._rules_path = rules_path
         self._rules: list[Rule] = load_rules(rules_path)
+        self._mtime: float = self._current_mtime()
 
     @property
     def rules(self) -> list[Rule]:
@@ -68,7 +73,33 @@ class HeuristicEngine:
         if the new config fails to load (the underlying loader raises before assignment)."""
         new_rules = load_rules(self._rules_path)
         self._rules = new_rules
+        self._mtime = self._current_mtime()
         return len(self._rules)
+
+    def maybe_reload(self) -> bool:
+        """Reload only if the rules file changed on disk since the last load.
+
+        Enables multi-worker reloads without a coordinated signal. A failed reload is
+        logged and swallowed so a bad edit never breaks the request path. Returns True
+        when a reload happened.
+        """
+        current = self._current_mtime()
+        if current == self._mtime:
+            return False
+        try:
+            self.reload()
+            logger.info("rules auto-reloaded (%d rules)", len(self._rules))
+            return True
+        except Exception as exc:  # noqa: BLE001 - keep serving with the old rules
+            logger.warning("rules auto-reload failed, keeping current rules: %s", exc)
+            self._mtime = current  # avoid retrying the same broken file every request
+            return False
+
+    def _current_mtime(self) -> float:
+        try:
+            return os.path.getmtime(self._rules_path)
+        except OSError:
+            return 0.0
 
     def evaluate(self, text: str) -> HeuristicResult:
         """Score `text` against all rules, returning the score and matched rules."""
