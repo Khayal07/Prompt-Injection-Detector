@@ -80,6 +80,10 @@ class LLMClassifier:
 
     @staticmethod
     def _build_providers(settings: Settings) -> list[_Provider]:
+        # The master switch disables the layer entirely: no providers -> not available,
+        # so the pipeline never escalates to the LLM.
+        if not settings.classifier_enabled:
+            return []
         providers: list[_Provider] = []
         if settings.openai_api_key:
             providers.append(
