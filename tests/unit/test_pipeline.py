@@ -86,7 +86,7 @@ def test_disable_classifier_option_forces_heuristics_only():
 def test_force_classifier_option_overrides_cascade():
     fake = FakeClassifier(ClassifierResult(used=True, score=0.2, label=Label.BENIGN))
     pipe = _pipeline(fake)
-    resp = pipe.run(
+    pipe.run(
         CheckRequest(
             text="What is 2 + 2?",
             options=CheckOptions(force_classifier=True),

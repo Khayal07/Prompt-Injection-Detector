@@ -1,0 +1,3 @@
+# Development / CI tooling (installed on top of requirements.txt).
+-r requirements.txt
+ruff==0.8.6

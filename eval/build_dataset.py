@@ -79,7 +79,7 @@ def _normalise_hf_label(value) -> int | None:
     """Map a Hugging Face label (int or string) to our 1=malicious / 0=benign scheme."""
     if isinstance(value, bool):
         return int(value)
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return 1 if int(value) == 1 else 0
     if isinstance(value, str):
         v = value.strip().lower()

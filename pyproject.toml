@@ -1,0 +1,12 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+# B008: FastAPI relies on function calls (Depends/Header) in argument defaults.
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use private helpers and long inline strings deliberately.
+"tests/**" = ["E501"]

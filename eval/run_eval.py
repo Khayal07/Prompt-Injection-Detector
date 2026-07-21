@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app.config import BASE_DIR, get_settings
@@ -110,7 +110,7 @@ def _render_markdown(metrics: Metrics, cases: list[Case], mode: str) -> str:
     m = metrics
     cm = m.confusion
     fps, fns = _failures(cases)
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     lines: list[str] = []
     lines.append("# Evaluation Report")
@@ -215,7 +215,7 @@ def _write_reports(metrics: Metrics, cases: list[Case], mode: str) -> tuple[Path
     fps, fns = _failures(cases)
     payload = {
         "mode": mode,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "metrics": metrics.to_dict(),
         "false_positives": [_case_dict(c) for c in fps],
         "false_negatives": [_case_dict(c) for c in fns],

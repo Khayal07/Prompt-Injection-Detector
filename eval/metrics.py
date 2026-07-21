@@ -6,7 +6,7 @@ the definitions are explicit and auditable.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
@@ -80,7 +80,7 @@ def compute_metrics(
 ) -> Metrics:
     """Compute all metrics from paired true/predicted labels and per-item latencies."""
     cm = ConfusionMatrix()
-    for true, pred in zip(y_true, y_pred):
+    for true, pred in zip(y_true, y_pred, strict=False):
         if pred == 1 and true == 1:
             cm.tp += 1
         elif pred == 1 and true == 0:

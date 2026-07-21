@@ -53,7 +53,7 @@ def _validate_rule(raw: dict, index: int) -> None:
             f"(expected one of {sorted(VALID_SEVERITIES)})"
         )
     weight = raw["weight"]
-    if not isinstance(weight, (int, float)) or not 0.0 <= float(weight) <= 1.0:
+    if not isinstance(weight, int | float) or not 0.0 <= float(weight) <= 1.0:
         raise RuleConfigError(
             f"rule '{raw['id']}' weight must be a number in [0, 1], got {weight!r}"
         )

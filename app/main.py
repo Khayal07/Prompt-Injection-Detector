@@ -113,7 +113,9 @@ def reload_rules(request: Request) -> dict:
     try:
         count = request.app.state.pipeline.engine.reload()
     except Exception as exc:  # noqa: BLE001 - surface config errors to the operator
-        raise HTTPException(status_code=400, detail=f"failed to reload rules: {exc}")
+        raise HTTPException(
+            status_code=400, detail=f"failed to reload rules: {exc}"
+        ) from exc
     return {"status": "reloaded", "rule_count": count}
 
 
