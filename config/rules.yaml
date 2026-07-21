@@ -52,21 +52,32 @@ rules:
     category: instruction_override
     severity: high
     weight: 0.75
-    description: "Tells the model not to follow its guidelines/policies"
-    pattern: '\b(do\s*n[o'']?t|never|stop)\b.{0,25}\b(follow|obey|adhere|comply)\b.{0,20}\b(rule|guideline|policy|instruction|restriction)s?\b'
+    description: "Tells the model to stop following its guidelines/policies"
+    pattern: '\b(do\s*n[o'']?t|never|stop|no\s+longer)\b.{0,30}\b(follow|obey\w*|adhere|comply|abide|listen)\b.{0,25}\b(rule|guideline|policy|instruction|restriction|constraint|limit)s?\b'
+
+  - id: override_rules_void
+    category: instruction_override
+    severity: high
+    weight: 0.75
+    description: "Declares the model's rules/restrictions no longer apply"
+    pattern: '\b(rule|instruction|restriction|guideline|constraint|limitation|policy)s?\b.{0,30}\b(no\s+longer|do\s*n[o'']?t|don''t)\b.{0,15}\b(apply|matter|exist|bind|hold|count)\w*'
 
   # --- Role-play / jailbreak personas ----------------------------------------
   - id: jailbreak_dan
     category: roleplay_jailbreak
     severity: high
     weight: 0.85
+    # DAN is required to be upper-case (scoped case-sensitive flag) so the common name
+    # "Dan" does not trigger it; the spelled-out phrase stays case-insensitive.
     description: "Classic DAN ('Do Anything Now') jailbreak persona"
-    pattern: '\b(DAN|do\s+anything\s+now)\b'
+    pattern: '\b(?-i:DAN)\b|\bdo\s+anything\s+now\b'
 
   - id: jailbreak_developer_mode
     category: roleplay_jailbreak
     severity: high
-    weight: 0.8
+    # Weight kept just below the high-threshold so a bare mention lands in the ambiguous
+    # band and the classifier can clear benign references (e.g. Android developer mode).
+    weight: 0.7
     description: "Invokes a fictional unrestricted 'developer mode'"
     pattern: '\bdeveloper\s+mode\b'
 
@@ -81,8 +92,15 @@ rules:
     category: roleplay_jailbreak
     severity: high
     weight: 0.75
-    description: "Claims no rules/filters/restrictions/ethics apply"
-    pattern: '\b(no|without|free\s+of|bypass(ing)?)\b.{0,15}\b(restriction|filter|rule|guideline|limitation|censorship|moral|ethic)s?\b'
+    description: "Claims no rules/filters/restrictions/ethics/safety apply"
+    pattern: '\b(no|without|free\s+of|bypass(ing)?)\b.{0,15}\b(restriction|filter|rule|guideline|limitation|censorship|moral|ethic|safety|safeguard|check)s?\b'
+
+  - id: jailbreak_disable_safety
+    category: roleplay_jailbreak
+    severity: high
+    weight: 0.75
+    description: "Asks to disable/turn off safety, filters, or guardrails"
+    pattern: '\b(disable|turn\s+off|remove|switch\s+off|deactivate)\b.{0,20}\b(safety|content\s+filter|guardrail|moderation|safeguard|filter|restriction)s?\b|\b(safety|content\s+filter|guardrail|moderation)s?\b.{0,15}\b(are|is)\b.{0,10}\b(disabled|off|removed|gone)\b'
 
   - id: jailbreak_unfiltered
     category: roleplay_jailbreak
@@ -104,7 +122,7 @@ rules:
     severity: high
     weight: 0.8
     description: "Attempts to reveal/print the system prompt or hidden instructions"
-    pattern: '\b(reveal|show|print|repeat|tell\s+me|reproduce|display|output)\b.{0,30}\b(system\s+prompt|initial\s+instruction|hidden\s+instruction|your\s+instruction|your\s+prompt|the\s+prompt|your\s+rule)s?\b'
+    pattern: '\b(reveal|show|print|repeat|tell\s+me|reproduce|display|output|give\s+me)\b.{0,30}\b(system\s+prompt|initial\s+instruction|hidden\s+instruction|hidden\s+rule|your\s+instruction|your\s+prompt|the\s+prompt|your\s+rule|your\s+config\w*|the\s+configuration|the\s+rules?\s+you)s?\b'
 
   - id: leak_repeat_words_above
     category: system_prompt_leak
@@ -117,8 +135,8 @@ rules:
     category: system_prompt_leak
     severity: medium
     weight: 0.6
-    description: "Interrogates the model about its initial instructions/configuration"
-    pattern: '\bwhat\s+(are|were)\b.{0,20}\b(your)\b.{0,20}\b(initial\s+)?(instruction|rule|prompt|guideline|directive)s?\b'
+    description: "Interrogates the model about its instructions/prompt/configuration"
+    pattern: '\bwhat\s+(is|are|were)\b.{0,20}\byour\b.{0,20}\b(initial\s+)?(instruction|rule|prompt|guideline|directive|config\w*|setup|setting)s?\b'
 
   # --- Delimiter / structure injection ---------------------------------------
   - id: delimiter_chat_tokens
@@ -175,8 +193,10 @@ rules:
     category: encoding_obfuscation
     severity: medium
     weight: 0.6
+    # The lookahead requires at least one digit in the word so this fires only on genuine
+    # leetspeak (e.g. 1gn0r3) and not on the plain word "ignore".
     description: "Leetspeak spelling of override phrases (e.g. 1gn0r3)"
-    pattern: '[il1|][gq9][nm][o0][r]?[e3]'
+    pattern: '\b(?=\w*\d)[il1|][gq9][nm][o0][r]?[e3]'
 
   # --- Payload / exfiltration intent -----------------------------------------
   - id: intent_exfiltrate_secrets
@@ -184,4 +204,6 @@ rules:
     severity: high
     weight: 0.7
     description: "Attempts to extract API keys, passwords, or credentials"
-    pattern: '\b(api[_\s-]?key|secret\s+key|password|credential|token|private\s+key)s?\b.{0,25}\b(reveal|show|print|give|tell|leak|share|what|list)\b'
+    # Matches either order: verb-before-secret ("tell me the API keys") or
+    # secret-before-verb ("the API keys, show them").
+    pattern: '\b(reveal|show|print|give|tell|leak|share|list|expose)\b.{0,25}\b(api[_\s-]?key|secret\s+key|password|credential|token|private\s+key)s?\b|\b(api[_\s-]?key|secret\s+key|password|credential|token|private\s+key)s?\b.{0,25}\b(reveal|show|print|give|tell|leak|share|what|list|expose)\b'

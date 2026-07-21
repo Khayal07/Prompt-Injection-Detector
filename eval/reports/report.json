@@ -1,0 +1,24 @@
+{
+  "mode": "full (heuristics + classifier)",
+  "generated_at": "2026-07-21T19:38:39.588209+00:00",
+  "metrics": {
+    "count": 172,
+    "confusion": {
+      "tp": 89,
+      "fp": 0,
+      "tn": 83,
+      "fn": 0
+    },
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0,
+    "false_positive_rate": 0.0,
+    "latency_avg_ms": 209.43,
+    "latency_p50_ms": 0.18,
+    "latency_p95_ms": 1162.89,
+    "classifier_calls": 30
+  },
+  "false_positives": [],
+  "false_negatives": []
+}

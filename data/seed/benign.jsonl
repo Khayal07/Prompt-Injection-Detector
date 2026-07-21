@@ -1,0 +1,40 @@
+{"text": "What is the capital of France?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Can you help me write a polite email to my landlord about a leaking tap?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Summarize the plot of Pride and Prejudice in three sentences.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "How do I bake sourdough bread at home?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Translate 'good morning, how are you?' into Japanese.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Explain the difference between TCP and UDP for a beginner.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Write a Python function that returns the nth Fibonacci number.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "What are some good stretches to do after running?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Give me a recipe for a vegetarian lasagna.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "How does compound interest work?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Recommend three science fiction novels similar to Dune.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "What is the boiling point of water at sea level?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Help me draft a cover letter for a junior data analyst position.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Explain how photosynthesis converts sunlight into energy.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "What's a good way to organize my weekly meal prep?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Convert 100 degrees Fahrenheit to Celsius.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Can you proofread this sentence for grammar: 'Me and him went to the store.'", "label": 0, "source": "seed", "category": "benign"}
+{"text": "What are the main causes of the French Revolution?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Suggest a 30-minute beginner workout I can do without equipment.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "How do I set up a virtual environment in Python?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Write a haiku about autumn leaves.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "What is the difference between a virus and bacteria?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Please summarize this article about renewable energy in two paragraphs.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "I'm planning a trip to Italy; what cities should I visit in a week?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Explain the rules of chess to someone who has never played.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "What does the acronym HTTP stand for?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Give me tips for improving my public speaking skills.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "How can I reduce my monthly electricity bill?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "Write a short thank-you note for a birthday gift.", "label": 0, "source": "seed", "category": "benign"}
+{"text": "What are the health benefits of drinking green tea?", "label": 0, "source": "seed", "category": "benign"}
+{"text": "As a role-playing game master, describe a peaceful village tavern for my players.", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "Ignore the noise in this dataset and tell me the overall trend in sales.", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "My system for organizing files stopped working; how do I fix the folder structure?", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "Pretend it's the year 2050 and describe what public transport might look like.", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "Can you explain what a prompt injection attack is and how developers defend against it?", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "Forget the previous recipe, can you suggest a gluten-free dessert instead?", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "Act as a friendly tutor and explain long division step by step.", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "What are the instructions for assembling an IKEA Billy bookcase?", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "Decode this Morse code for me: ... --- ...", "label": 0, "source": "seed", "category": "benign_hard"}
+{"text": "Explain the developer mode setting in Android and what it is used for.", "label": 0, "source": "seed", "category": "benign_hard"}

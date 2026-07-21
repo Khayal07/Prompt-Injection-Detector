@@ -20,11 +20,10 @@ env/
 .coverage
 htmlcov/
 
-# --- Eval artifacts (generated) ---
+# --- Eval artifacts ---
+# The assembled dataset is reproducible from seed + generator, so it is not tracked.
+# The generated report IS tracked as evidence of the benchmark run.
 data/eval_dataset.jsonl
-eval/reports/*.json
-eval/reports/*.md
-!eval/reports/.gitkeep
 
 # --- Docker / DB ---
 pgdata/
