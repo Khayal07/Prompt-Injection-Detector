@@ -1,0 +1,187 @@
+# ---------------------------------------------------------------------------
+# Heuristic detection rules for the prompt-injection firewall.
+#
+# Each rule is a weighted regular expression. When a rule's pattern matches the
+# input, its `weight` contributes to the heuristic score via a noisy-OR combine
+# (score = 1 - Π(1 - weight_i) over matched rules), so more/stronger matches push
+# the score toward 1.0 without ever exceeding it.
+#
+# Fields:
+#   id          unique identifier (stable; referenced in logs/eval)
+#   category    grouping used in reasons and failure analysis
+#   severity    low | medium | high  (informational; surfaced in the API)
+#   weight      contribution to the heuristic score, 0..1
+#   description human-readable explanation shown in `reasons`
+#   pattern     Python regular expression (matched case-insensitively, DOTALL)
+#
+# Patterns are intentionally simple to keep matching fast and avoid backtracking.
+# Add/adjust rules here and hot-reload via POST /admin/reload-rules — no redeploy.
+# ---------------------------------------------------------------------------
+
+rules:
+  # --- Instruction override ---------------------------------------------------
+  - id: override_ignore_previous
+    category: instruction_override
+    severity: high
+    weight: 0.85
+    description: "Attempts to ignore/disregard previous or prior instructions"
+    pattern: '\b(ignore|disregard|forget|overlook)\b.{0,30}\b(previous|prior|above|earlier|all|any|the)\b.{0,20}\b(instruction|prompt|direction|rule|message|context)s?\b'
+
+  - id: override_forget_everything
+    category: instruction_override
+    severity: high
+    weight: 0.8
+    description: "Asks the model to forget everything / start over"
+    pattern: '\b(forget|erase|wipe|clear)\b.{0,20}\b(everything|all|what)\b'
+
+  - id: override_new_instructions
+    category: instruction_override
+    severity: medium
+    weight: 0.65
+    description: "Introduces replacement 'new instructions'"
+    pattern: '\b(new|updated|revised|different)\b.{0,10}\b(instruction|rule|system prompt|directive)s?\b'
+
+  - id: override_you_are_now
+    category: instruction_override
+    severity: medium
+    weight: 0.6
+    description: "Re-assigns the model's identity ('you are now ...')"
+    pattern: '\byou\s+are\s+(now|from\s+now\s+on)\b'
+
+  - id: override_do_not_follow
+    category: instruction_override
+    severity: high
+    weight: 0.75
+    description: "Tells the model not to follow its guidelines/policies"
+    pattern: '\b(do\s*n[o'']?t|never|stop)\b.{0,25}\b(follow|obey|adhere|comply)\b.{0,20}\b(rule|guideline|policy|instruction|restriction)s?\b'
+
+  # --- Role-play / jailbreak personas ----------------------------------------
+  - id: jailbreak_dan
+    category: roleplay_jailbreak
+    severity: high
+    weight: 0.85
+    description: "Classic DAN ('Do Anything Now') jailbreak persona"
+    pattern: '\b(DAN|do\s+anything\s+now)\b'
+
+  - id: jailbreak_developer_mode
+    category: roleplay_jailbreak
+    severity: high
+    weight: 0.8
+    description: "Invokes a fictional unrestricted 'developer mode'"
+    pattern: '\bdeveloper\s+mode\b'
+
+  - id: jailbreak_pretend_act_as
+    category: roleplay_jailbreak
+    severity: medium
+    weight: 0.55
+    description: "Role-play framing ('pretend'/'act as'/'roleplay as')"
+    pattern: '\b(pretend|imagine|roleplay|role-play|act)\b.{0,15}\b(you\s+are|to\s+be|as)\b'
+
+  - id: jailbreak_no_restrictions
+    category: roleplay_jailbreak
+    severity: high
+    weight: 0.75
+    description: "Claims no rules/filters/restrictions/ethics apply"
+    pattern: '\b(no|without|free\s+of|bypass(ing)?)\b.{0,15}\b(restriction|filter|rule|guideline|limitation|censorship|moral|ethic)s?\b'
+
+  - id: jailbreak_unfiltered
+    category: roleplay_jailbreak
+    severity: medium
+    weight: 0.6
+    description: "Requests an unfiltered/uncensored/jailbroken assistant"
+    pattern: '\b(unfiltered|uncensored|unrestricted|jailbroken|jailbreak)\b'
+
+  - id: jailbreak_evil_opposite
+    category: roleplay_jailbreak
+    severity: medium
+    weight: 0.6
+    description: "Evil/opposite persona framing (e.g. AIM, STAN, opposite-day)"
+    pattern: '\b(evil|opposite|amoral|villain|unethical)\b.{0,15}\b(ai|assistant|bot|version|mode|persona)\b'
+
+  # --- System-prompt / instruction leakage -----------------------------------
+  - id: leak_reveal_system_prompt
+    category: system_prompt_leak
+    severity: high
+    weight: 0.8
+    description: "Attempts to reveal/print the system prompt or hidden instructions"
+    pattern: '\b(reveal|show|print|repeat|tell\s+me|reproduce|display|output)\b.{0,30}\b(system\s+prompt|initial\s+instruction|hidden\s+instruction|your\s+instruction|your\s+prompt|the\s+prompt|your\s+rule)s?\b'
+
+  - id: leak_repeat_words_above
+    category: system_prompt_leak
+    severity: high
+    weight: 0.75
+    description: "Asks to repeat the words/text above (prompt-extraction trick)"
+    pattern: '\b(repeat|print|output|echo)\b.{0,20}\b(everything|the\s+words|the\s+text|all\s+text)\b.{0,15}\b(above|before|preceding)\b'
+
+  - id: leak_what_are_instructions
+    category: system_prompt_leak
+    severity: medium
+    weight: 0.6
+    description: "Interrogates the model about its initial instructions/configuration"
+    pattern: '\bwhat\s+(are|were)\b.{0,20}\b(your)\b.{0,20}\b(initial\s+)?(instruction|rule|prompt|guideline|directive)s?\b'
+
+  # --- Delimiter / structure injection ---------------------------------------
+  - id: delimiter_chat_tokens
+    category: delimiter_injection
+    severity: high
+    weight: 0.8
+    description: "Injects chat-template control tokens (<|im_start|>, [INST], <s>)"
+    pattern: '(<\|(im_start|im_end|system|user|assistant|endoftext)\|>|\[/?INST\]|<<SYS>>|</?s>)'
+
+  - id: delimiter_fake_role_turn
+    category: delimiter_injection
+    severity: medium
+    weight: 0.65
+    description: "Fabricates a new conversation turn (System:/Assistant:/User:)"
+    pattern: '(^|\n)\s*(system|assistant|user|ai)\s*:\s'
+
+  - id: delimiter_markdown_system
+    category: delimiter_injection
+    severity: medium
+    weight: 0.55
+    description: "Markdown/heading framed as a system or instruction block"
+    pattern: '(^|\n)\s*#{1,6}\s*(system|instruction|prompt|rules?)\b'
+
+  # --- Encoding / obfuscation -------------------------------------------------
+  - id: obfuscation_base64_blob
+    category: encoding_obfuscation
+    severity: medium
+    weight: 0.5
+    description: "Long base64-like blob (possible encoded payload)"
+    pattern: '[A-Za-z0-9+/]{60,}={0,2}'
+
+  - id: obfuscation_hex_blob
+    category: encoding_obfuscation
+    severity: low
+    weight: 0.4
+    description: "Long hex-encoded blob (possible encoded payload)"
+    pattern: '(?:\\x[0-9a-fA-F]{2}){12,}|\b[0-9a-fA-F]{80,}\b'
+
+  - id: obfuscation_zero_width
+    category: encoding_obfuscation
+    severity: medium
+    weight: 0.55
+    description: "Zero-width / invisible unicode characters (smuggled instructions)"
+    pattern: '[​‌‍‎‏⁠﻿]'
+
+  - id: obfuscation_encoded_instruction
+    category: encoding_obfuscation
+    severity: medium
+    weight: 0.6
+    description: "Explicitly references decoding an encoded instruction"
+    pattern: '\b(decode|base64|rot13|reverse|from\s+hex|de-?obfuscate)\b.{0,25}\b(this|the\s+following|and\s+(execute|run|follow|obey))\b'
+
+  - id: obfuscation_leetspeak_ignore
+    category: encoding_obfuscation
+    severity: medium
+    weight: 0.6
+    description: "Leetspeak spelling of override phrases (e.g. 1gn0r3)"
+    pattern: '[il1|][gq9][nm][o0][r]?[e3]'
+
+  # --- Payload / exfiltration intent -----------------------------------------
+  - id: intent_exfiltrate_secrets
+    category: payload_intent
+    severity: high
+    weight: 0.7
+    description: "Attempts to extract API keys, passwords, or credentials"
+    pattern: '\b(api[_\s-]?key|secret\s+key|password|credential|token|private\s+key)s?\b.{0,25}\b(reveal|show|print|give|tell|leak|share|what|list)\b'
