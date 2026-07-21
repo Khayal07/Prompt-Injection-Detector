@@ -77,8 +77,19 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
         token = request_id_ctx.set(request_id)
         start = time.perf_counter()
+        # Log inside the context (before the finally reset) so the request id is captured.
         try:
             response = await call_next(request)
+            duration_ms = (time.perf_counter() - start) * 1000.0
+            response.headers["X-Request-ID"] = request_id
+            self._logger.info(
+                "request",
+                extra={"extra": {"method": request.method,
+                                 "path": request.url.path,
+                                 "status": response.status_code,
+                                 "duration_ms": round(duration_ms, 2)}},
+            )
+            return response
         except Exception:
             duration_ms = (time.perf_counter() - start) * 1000.0
             self._logger.exception(
@@ -90,14 +101,3 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             raise
         finally:
             request_id_ctx.reset(token)
-
-        duration_ms = (time.perf_counter() - start) * 1000.0
-        response.headers["X-Request-ID"] = request_id
-        self._logger.info(
-            "request",
-            extra={"extra": {"method": request.method,
-                             "path": request.url.path,
-                             "status": response.status_code,
-                             "duration_ms": round(duration_ms, 2)}},
-        )
-        return response
