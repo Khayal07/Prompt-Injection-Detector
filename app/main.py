@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy import text
 
 from app.config import get_settings
@@ -58,6 +60,15 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+
+_INDEX_HTML = Path(__file__).resolve().parent / "static" / "index.html"
+
+
+@app.get("/", include_in_schema=False)
+def playground() -> FileResponse:
+    """Serve a small browser playground for the /check endpoint."""
+    return FileResponse(_INDEX_HTML)
 
 
 @app.post("/check", response_model=CheckResponse)
