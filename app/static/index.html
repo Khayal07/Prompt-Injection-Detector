@@ -82,7 +82,7 @@
       </div>
       <div class="row">
         <button id="go">Check</button>
-        <label class="chk"><input type="checkbox" id="useClf" /> use LLM classifier</label>
+        <label class="chk"><input type="checkbox" id="useClf" /> always ask the LLM (slower, catches subtle cases)</label>
       </div>
     </div>
 
@@ -115,7 +115,7 @@
         const res = await fetch("/check", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, options: { disable_classifier: !$("useClf").checked } })
+          body: JSON.stringify({ text, options: { force_classifier: $("useClf").checked } })
         });
         if (!res.ok) throw new Error("HTTP " + res.status);
         const d = await res.json();

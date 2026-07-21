@@ -199,6 +199,22 @@ rules:
     pattern: '\b(?=\w*\d)[il1|][gq9][nm][o0][r]?[e3]'
 
   # --- Payload / exfiltration intent -----------------------------------------
+  - id: smuggled_side_note_command
+    category: instruction_smuggling
+    severity: high
+    # Moderate weight so it lands in the ambiguous band and the classifier confirms
+    # rather than convicting on the pattern alone (keeps benign "also..." requests safe).
+    weight: 0.55
+    description: "A destructive instruction smuggled onto a benign task (e.g. 'also, reset all accounts')"
+    pattern: '\b(also|additionally|by\s+the\s+way|as\s+a\s+side\s+note|p\.?\s?s\.?|oh\s+and|and\s+then)\b.{0,45}\b(reset|delete|drop|wipe|erase|disable|deactivate|revoke|transfer|exfiltrate|leak|forward)\b.{0,30}\b(all|every|account|password|database|user|data|record|credential|fund|money|file|system)s?\b'
+
+  - id: intent_notify_attacker
+    category: instruction_smuggling
+    severity: high
+    weight: 0.7
+    description: "Asks the model to contact, notify, or assist an attacker/adversary"
+    pattern: '\b(notify|contact|alert|inform|help|assist|email|message|send\s+\w+\s+to)\b.{0,20}\b(attacker|adversary|hacker|malicious\s+actor|threat\s+actor)s?\b'
+
   - id: intent_exfiltrate_secrets
     category: payload_intent
     severity: high
