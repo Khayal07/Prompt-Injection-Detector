@@ -19,7 +19,8 @@ ambiguous middle band — keeping latency and cost low while catching subtle att
 - 🗄️ **Full audit logging** — every request, verdict, and latency persisted to Postgres.
 - 📊 **Measurable** — a benchmark harness reports precision / recall / F1 / FPR / latency
   with a failure analysis, not just "it works."
-- 🐳 **Dockerized** — `docker compose up` brings up the API and Postgres.
+- 🐳 **Production-ready** — gunicorn/uvicorn workers, Docker health checks, API-key auth,
+  rate limiting, structured JSON logs with request IDs, Prometheus metrics, and CI.
 
 ## Architecture
 
@@ -140,10 +141,13 @@ Response:
 `allow` / `flag` / `block`. The service returns a verdict — your application decides whether
 to honor `block`.
 
+When `API_KEYS` is configured, send the key as a header: `X-API-Key: <your-key>`.
+
 ### Other routes
 
 - `GET /health` — DB connectivity, classifier availability, rule count.
-- `POST /admin/reload-rules` — hot-reload `config/rules.yaml` (no redeploy).
+- `GET /metrics` — Prometheus metrics (when `METRICS_ENABLED=true`).
+- `POST /admin/reload-rules` — hot-reload `config/rules.yaml` (no redeploy; requires auth).
 
 ## Integrating into your app
 
@@ -198,6 +202,36 @@ All settings are environment-driven (see `.env.example`). Key knobs:
 | `CLASSIFIER_ENABLED` | `true` | Master switch for the LLM layer (heuristics-only when false) |
 | `OPENAI_MODEL` | `gpt-4o-mini` | Classifier model |
 | `LOGGING_ENABLED` / `INPUT_PREVIEW_CHARS` | `true` / `500` | Persist verdicts; how much input text to store |
+| `API_KEYS` | _(empty)_ | Comma-separated keys; when set, `/check` and `/admin` require `X-API-Key`. Empty = auth off |
+| `RATE_LIMIT` / `RATE_LIMIT_STORAGE_URI` | `60/minute` / `memory://` | Per-IP limit; use `redis://…` to share across workers |
+| `MAX_INPUT_CHARS` | `20000` | Reject larger inputs with 413 |
+| `CORS_ORIGINS` | _(empty)_ | Comma-separated allowed browser origins |
+| `LOG_LEVEL` / `JSON_LOGS` / `METRICS_ENABLED` | `INFO` / `true` / `true` | Logging + `/metrics` |
+| `RULES_AUTORELOAD` / `WEB_CONCURRENCY` | `false` / `2` | Auto-reload rules on file change; gunicorn workers |
+
+## Deployment
+
+The container runs **gunicorn managing uvicorn workers** with a built-in health check.
+
+```bash
+cp .env.example .env          # set API_KEYS, a strong DATABASE_URL, OPENAI_API_KEY
+docker compose up --build -d  # api (gunicorn) + postgres, both health-checked
+```
+
+Production checklist:
+
+- **Auth:** set `API_KEYS` (e.g. `openssl rand -hex 32`); callers send `X-API-Key`.
+  `/health`, `/`, `/metrics` stay public for probes/scraping.
+- **Rate limiting:** tune `RATE_LIMIT`; for multiple workers/replicas set
+  `RATE_LIMIT_STORAGE_URI=redis://…` so the limit is global rather than per-process.
+- **Scaling:** scale workers with `WEB_CONCURRENCY`, or run multiple replicas behind a load
+  balancer. Enable `RULES_AUTORELOAD=true` so every worker/replica picks up rule edits.
+- **TLS / network:** terminate TLS at a reverse proxy (nginx, Traefik, a cloud LB) and keep
+  `/admin/reload-rules` and `/docs` on an internal network.
+- **Observability:** scrape `/metrics` with Prometheus; ship the JSON logs (each carries an
+  `X-Request-ID`) to your log stack.
+- **Health checks:** point liveness/readiness probes at `GET /health`.
+- **CI:** `.github/workflows/ci.yml` runs ruff + pytest on every push/PR.
 
 ## Evaluation
 
